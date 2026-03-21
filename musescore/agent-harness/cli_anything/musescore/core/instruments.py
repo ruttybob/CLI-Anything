@@ -195,16 +195,27 @@ def reorder_instruments(path: str, output_path: str,
             name = ln.text if ln is not None else ""
             parts_by_name[name.lower()] = part
 
+    # Validate: new_order must contain all instruments
+    provided = {n.lower() for n in new_order}
+    existing = set(parts_by_name.keys())
+    missing = existing - provided
+    if missing:
+        missing_names = [n for n in parts_by_name if n in missing]
+        raise ValueError(
+            f"new_order is missing instruments: {missing_names}. "
+            f"All instruments must be included to prevent data loss."
+        )
+    unknown = provided - existing
+    if unknown:
+        raise ValueError(f"Instruments not found in score: {list(unknown)}")
+
     # Remove all parts
     for part in score.findall("Part"):
         score.remove(part)
 
     # Re-add in new order
     for name in new_order:
-        part = parts_by_name.get(name.lower())
-        if part is None:
-            raise ValueError(f"Instrument '{name}' not found in score")
-        score.append(part)
+        score.append(parts_by_name[name.lower()])
 
     xml_utils.write_mscz(output_path, data)
 

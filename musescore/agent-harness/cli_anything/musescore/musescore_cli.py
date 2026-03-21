@@ -12,6 +12,7 @@ Usage:
     cli-anything-musescore   # Enter interactive REPL
 """
 
+import functools
 import sys
 import os
 import json
@@ -70,6 +71,7 @@ def _print_list(items: list, indent: int = 0):
 
 def handle_error(func):
     """Decorator for consistent error handling across commands."""
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -87,8 +89,6 @@ def handle_error(func):
                 click.echo(f"Error: {e}", err=True)
             if not _repl_mode:
                 sys.exit(1)
-    wrapper.__name__ = func.__name__
-    wrapper.__doc__ = func.__doc__
     return wrapper
 
 
@@ -524,7 +524,8 @@ def repl():
                 _repl_help(skin)
                 continue
 
-            args = line.split()
+            import shlex
+            args = shlex.split(line)
             try:
                 cli.main(args, standalone_mode=False)
             except SystemExit:

@@ -5,9 +5,13 @@ undo/redo stacks and safe file locking for concurrent access.
 """
 
 import copy
-import fcntl
 import json
 import os
+
+try:
+    import fcntl
+except ImportError:
+    fcntl = None  # Windows — file locking unavailable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -109,25 +113,30 @@ class Session:
 
 
 def _locked_save_json(path: str, data: Any):
-    """Save JSON data with file locking (fcntl.flock).
+    """Save JSON data with file locking where available.
 
-    Opens in r+ mode (never w which truncates before lock).
-    Creates the file first if it doesn't exist.
+    Uses fcntl.flock on Unix (r+ mode to avoid truncation before lock).
+    Falls back to plain write on Windows where fcntl is unavailable.
     """
-    # Ensure file exists
-    if not os.path.exists(path):
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w") as f:
-            f.write("{}")
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
 
-    with open(path, "r+") as f:
-        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-        try:
-            f.seek(0)
-            f.truncate()
+    if fcntl is not None:
+        # Unix: lock-safe write
+        if not os.path.exists(path):
+            with open(path, "w") as f:
+                f.write("{}")
+        with open(path, "r+") as f:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            try:
+                f.seek(0)
+                f.truncate()
+                json.dump(data, f, indent=2, default=str)
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+    else:
+        # Windows: plain write (session state is not concurrent-critical)
+        with open(path, "w") as f:
             json.dump(data, f, indent=2, default=str)
-        finally:
-            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
 
 # ── Singleton ─────────────────────────────────────────────────────────
