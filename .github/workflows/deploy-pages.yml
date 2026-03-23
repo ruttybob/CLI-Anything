@@ -38,6 +38,12 @@ jobs:
       - name: Generate registry dates
         run: python3 .github/scripts/update_registry_dates.py
 
+      - name: Generate meta-skill
+        run: python3 .github/scripts/generate_meta_skill.py
+
+      - name: Copy catalog to hub
+        run: cp cli-hub-skill/SKILL.md docs/hub/SKILL.md
+
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:

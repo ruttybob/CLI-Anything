@@ -400,12 +400,14 @@ Each installed CLI ships with a [`SKILL.md`](#-skillmd-generation) inside the Py
 
 CLI-Hub lets agents autonomously discover and install the CLIs they need — zero human intervention required.
 
-CLI-Anything ships a **meta-skill** at [`cli-hub-skill/SKILL.md`](cli-hub-skill/SKILL.md) that lets any AI agent browse, pick, and install from the full catalog of community CLIs — no human in the loop.
+**Agent-Native Catalog:** [`https://hkuds.github.io/CLI-Anything/SKILL.md`](https://hkuds.github.io/CLI-Anything/SKILL.md)
+
+CLI-Anything ships a **meta-skill** that lets any AI agent browse, pick, and install from the full catalog of community CLIs.
 
 **How it works:**
 
-1. Point your agent at the [CLI-Hub SKILL.md](https://raw.githubusercontent.com/HKUDS/CLI-Anything/main/cli-hub-skill/SKILL.md)
-2. The agent reads the catalog — 20+ CLIs organized by category with one-line `pip install` commands
+1. Point your agent to the catalog: [`https://hkuds.github.io/CLI-Anything/SKILL.md`](https://hkuds.github.io/CLI-Anything/SKILL.md)
+2. The agent reads 20+ CLIs organized by category with one-line `pip install` commands
 3. The agent installs whichever CLI fits the task, then reads that CLI's own SKILL.md for detailed usage
 
 ```bash
