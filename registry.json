@@ -384,6 +384,20 @@
       "contributor_url": "https://github.com/levishilf"
     },
     {
+ feat/add-intelwatch-harness
+      "name": "intelwatch",
+      "display_name": "Intelwatch",
+      "version": "1.0.0",
+      "description": "Competitive intelligence, M&A due diligence, and OSINT directly from your terminal.",
+      "requires": "Node.js >=18",
+      "homepage": "https://github.com/ashroth/intelwatch",
+      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=intelwatch/agent-harness",
+      "entry_point": "cli-anything-intelwatch",
+      "skill_md": "intelwatch/agent-harness/cli_anything/intelwatch/skills/SKILL.md",
+      "category": "osint",
+      "contributor": "ashroth",
+      "contributor_url": "https://github.com/ashroth"
+
       "name": "clibrowser",
       "display_name": "clibrowser",
       "version": "0.1.0",
@@ -410,6 +424,7 @@
       "category": "graphics",
       "contributor": "Taeyoung96",
       "contributor_url": "https://github.com/Taeyoung96"
+ main
     }
   ]
 }
