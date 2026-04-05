@@ -1,8 +1,6 @@
 """E2E tests — requires CloudAnalyzer and Open3D installed."""
 
 import json
-import subprocess
-import sys
 
 import pytest
 

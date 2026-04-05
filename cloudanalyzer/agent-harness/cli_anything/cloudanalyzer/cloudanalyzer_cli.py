@@ -15,7 +15,6 @@ Backend: CloudAnalyzer Python package (direct import, no subprocess)
 """
 
 import json
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -183,6 +182,41 @@ def evaluate_ground(
         ctx.exit(1)
 
 
+@evaluate.command("batch")
+@click.argument("directory")
+@click.argument("reference")
+@click.option("--min-auc", type=float, default=None)
+@click.option("--max-chamfer", type=float, default=None)
+@click.pass_context
+def evaluate_batch(ctx: click.Context, directory: str, reference: str, min_auc: Optional[float], max_chamfer: Optional[float]) -> None:
+    """Batch evaluation of multiple point clouds."""
+    try:
+        from ca.batch import batch_evaluate
+        result = batch_evaluate(directory, reference, min_auc=min_auc, max_chamfer=max_chamfer)
+        _out(ctx, result)
+    except Exception as e:
+        _error(str(e), ctx.obj.get("json", False))
+        ctx.exit(1)
+
+
+@evaluate.command("pipeline")
+@click.argument("input_path")
+@click.argument("reference")
+@click.option("-o", "--output", required=True)
+@click.option("-v", "--voxel-size", type=float, default=0.05)
+@click.option("--filter/--no-filter", "apply_filter", default=False)
+@click.pass_context
+def evaluate_pipeline(ctx: click.Context, input_path: str, reference: str, output: str, voxel_size: float, apply_filter: bool) -> None:
+    """Filter, downsample, evaluate in one command."""
+    try:
+        from ca.pipeline import run_pipeline
+        result = run_pipeline(input_path, reference, output, voxel_size=voxel_size, apply_filter=apply_filter)
+        _out(ctx, result)
+    except Exception as e:
+        _error(str(e), ctx.obj.get("json", False))
+        ctx.exit(1)
+
+
 # ── trajectory group ──────────────────────────────────────────────────────────
 
 @cli.group()
@@ -214,6 +248,45 @@ def trajectory_evaluate(
         gate = result.get("quality_gate")
         if gate and not gate["passed"]:
             ctx.exit(1)
+    except Exception as e:
+        _error(str(e), ctx.obj.get("json", False))
+        ctx.exit(1)
+
+
+@trajectory.command("batch")
+@click.argument("directory")
+@click.option("--reference-dir", required=True)
+@click.option("--max-ate", type=float, default=None)
+@click.option("--max-rpe", type=float, default=None)
+@click.option("--max-drift", type=float, default=None)
+@click.option("--min-coverage", type=float, default=None)
+@click.pass_context
+def trajectory_batch(ctx: click.Context, directory: str, reference_dir: str, **kwargs) -> None:
+    """Batch trajectory evaluation."""
+    try:
+        from ca.batch import trajectory_batch_evaluate
+        result = trajectory_batch_evaluate(directory, reference_dir, **kwargs)
+        _out(ctx, result)
+    except Exception as e:
+        _error(str(e), ctx.obj.get("json", False))
+        ctx.exit(1)
+
+
+@trajectory.command("run-evaluate")
+@click.argument("map_path")
+@click.argument("map_reference")
+@click.argument("trajectory_path")
+@click.argument("trajectory_reference")
+@click.option("--min-auc", type=float, default=None)
+@click.option("--max-ate", type=float, default=None)
+@click.option("--report", default=None)
+@click.pass_context
+def trajectory_run_evaluate(ctx: click.Context, map_path: str, map_reference: str, trajectory_path: str, trajectory_reference: str, **kwargs) -> None:
+    """Integrated map + trajectory evaluation."""
+    try:
+        from ca.run_evaluate import run_evaluate
+        result = run_evaluate(map_path, map_reference, trajectory_path, trajectory_reference, **kwargs)
+        _out(ctx, result)
     except Exception as e:
         _error(str(e), ctx.obj.get("json", False))
         ctx.exit(1)
@@ -378,6 +451,123 @@ def process_split(ctx: click.Context, input_path: str, output_dir: str, grid_siz
         ctx.exit(1)
 
 
+@process.command("sample")
+@click.argument("input_path")
+@click.option("-o", "--output", required=True)
+@click.option("-n", "--num-points", type=int, required=True)
+@click.pass_context
+def process_sample(ctx: click.Context, input_path: str, output: str, num_points: int) -> None:
+    """Random point sampling."""
+    try:
+        from ca.sample import random_sample
+        result = random_sample(input_path, output, num_points)
+        _out(ctx, result)
+    except Exception as e:
+        _error(str(e), ctx.obj.get("json", False))
+        ctx.exit(1)
+
+
+@process.command("filter")
+@click.argument("input_path")
+@click.option("-o", "--output", required=True)
+@click.option("--nb-neighbors", type=int, default=20)
+@click.option("--std-ratio", type=float, default=2.0)
+@click.pass_context
+def process_filter(ctx: click.Context, input_path: str, output: str, nb_neighbors: int, std_ratio: float) -> None:
+    """Statistical outlier removal."""
+    try:
+        from ca.filter import filter_outliers
+        result = filter_outliers(input_path, output, nb_neighbors=nb_neighbors, std_ratio=std_ratio)
+        _out(ctx, result)
+    except Exception as e:
+        _error(str(e), ctx.obj.get("json", False))
+        ctx.exit(1)
+
+
+@process.command("merge")
+@click.argument("inputs", nargs=-1, required=True)
+@click.option("-o", "--output", required=True)
+@click.pass_context
+def process_merge(ctx: click.Context, inputs: tuple[str, ...], output: str) -> None:
+    """Merge multiple point clouds."""
+    try:
+        from ca.merge import merge
+        result = merge(list(inputs), output)
+        _out(ctx, result)
+    except Exception as e:
+        _error(str(e), ctx.obj.get("json", False))
+        ctx.exit(1)
+
+
+@process.command("convert")
+@click.argument("input_path")
+@click.option("-o", "--output", required=True)
+@click.pass_context
+def process_convert(ctx: click.Context, input_path: str, output: str) -> None:
+    """Convert between point cloud formats."""
+    try:
+        from ca.convert import convert
+        result = convert(input_path, output)
+        _out(ctx, result)
+    except Exception as e:
+        _error(str(e), ctx.obj.get("json", False))
+        ctx.exit(1)
+
+
+# ── inspect group ─────────────────────────────────────────────────────────────
+
+@cli.group()
+@click.pass_context
+def inspect(ctx: click.Context) -> None:
+    """Visualization and inspection commands."""
+
+
+@inspect.command("view")
+@click.argument("path")
+@click.pass_context
+def inspect_view(ctx: click.Context, path: str) -> None:
+    """Open a point cloud viewer."""
+    try:
+        from ca.view import view
+        view(path)
+    except Exception as e:
+        _error(str(e), ctx.obj.get("json", False))
+        ctx.exit(1)
+
+
+@inspect.command("web")
+@click.argument("source")
+@click.argument("reference", required=False, default=None)
+@click.option("--heatmap", is_flag=True)
+@click.option("--trajectory", default=None)
+@click.option("--port", type=int, default=8080)
+@click.pass_context
+def inspect_web(ctx: click.Context, source: str, reference: Optional[str], heatmap: bool, trajectory: Optional[str], port: int) -> None:
+    """Interactive browser inspection."""
+    try:
+        from ca.web import launch_web
+        launch_web(source, reference=reference, heatmap=heatmap, trajectory=trajectory, port=port)
+    except Exception as e:
+        _error(str(e), ctx.obj.get("json", False))
+        ctx.exit(1)
+
+
+@inspect.command("web-export")
+@click.argument("source")
+@click.argument("reference", required=False, default=None)
+@click.option("-o", "--output", required=True)
+@click.pass_context
+def inspect_web_export(ctx: click.Context, source: str, reference: Optional[str], output: str) -> None:
+    """Export a static HTML inspection bundle."""
+    try:
+        from ca.web import export_web
+        result = export_web(source, reference=reference, output_dir=output)
+        _out(ctx, result)
+    except Exception as e:
+        _error(str(e), ctx.obj.get("json", False))
+        ctx.exit(1)
+
+
 # ── info group ────────────────────────────────────────────────────────────────
 
 @cli.group()
@@ -422,7 +612,7 @@ def session(ctx: click.Context) -> None:
 def session_new(ctx: click.Context, output: str, name: str) -> None:
     """Create a new project file."""
     try:
-        project = create_project(output, name=name)
+        create_project(output, name=name)
         _out(ctx, {"created": output, "name": name})
     except Exception as e:
         _error(str(e), ctx.obj.get("json", False))
