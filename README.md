@@ -971,7 +971,7 @@ Each application received complete, production-ready CLI interfaces — not demo
 <td>Performance Profiling</td>
 <td><code>cli-anything-unrealinsights</code></td>
 <td>Background trace sessions + engine-matched UnrealInsights build + headless export</td>
-<td align="center">✅ 46</td>
+<td align="center">✅ 50</td>
 </tr>
 <tr>
 <td align="center"><strong>☁️ <a href="cloudanalyzer/agent-harness/">CloudAnalyzer</a></strong></td>
@@ -981,12 +981,19 @@ Each application received complete, production-ready CLI interfaces — not demo
 <td align="center">✅ 14</td>
 </tr>
 <tr>
+<td align="center"><strong>🗺️ <a href="QGIS/agent-harness/">QGIS</a></strong></td>
+<td>Geospatial Analysis &amp; Mapping</td>
+<td><code>cli-anything-qgis</code></td>
+<td>PyQGIS + qgis_process</td>
+<td align="center">✅ 22</td>
+</tr>
+<tr>
 <td align="center" colspan="4"><strong>Total</strong></td>
-<td align="center"><strong>✅ 2,176</strong></td>
+<td align="center"><strong>✅ 2,202</strong></td>
 </tr>
 </table>
 
-> **100% pass rate** across all 2,176 tests — 1,597 unit tests + 560 end-to-end tests + 19 Node.js tests.
+> **100% pass rate** across all 2,202 tests — 1,613 unit tests + 570 end-to-end tests + 19 Node.js tests.
 
 ---
 
@@ -1025,10 +1032,10 @@ sketch         19 passed  ✅   (19 jest, Node.js)
 renderdoc      59 passed  ✅   (45 unit + 14 e2e)
 cloudcompare   88 passed  ✅   (49 unit + 39 e2e)
 openscreen    101 passed  ✅   (78 unit + 23 e2e)
-unrealinsights 46 passed  ✅   (46 unit + 0 e2e smoke-gated)
+unrealinsights 50 passed  ✅   (49 unit + 1 e2e, 9 backend-gated e2e skipped)
 cloudanalyzer  14 passed  ✅   (7 unit + 7 e2e)
 ──────────────────────────────────────────────────────────────────────────────
-TOTAL        2,166 passed  ✅   100% pass rate
+TOTAL        2,202 passed  ✅   100% pass rate
 ```
 
 ---
@@ -1102,7 +1109,7 @@ cli-anything/
 ├── 🎮 godot/agent-harness/              # Godot Engine CLI (24 tests)
 ├── 🎨 sketch/agent-harness/             # Sketch CLI (19 tests, Node.js)
 ├── 🔬 renderdoc/agent-harness/          # RenderDoc CLI (59 tests)
-├── 📈 unrealinsights/agent-harness/     # Unreal Insights CLI (46 tests)
+├── 📈 unrealinsights/agent-harness/     # Unreal Insights CLI (50 tests)
 ├── 🎬 videocaptioner/agent-harness/     # VideoCaptioner CLI (26 tests)
 ├── 🎬 openscreen/agent-harness/         # Openscreen CLI — screen recording editor (101 tests)
 ├── ☁️ cloudcompare/agent-harness/       # CloudCompare CLI (88 tests)
