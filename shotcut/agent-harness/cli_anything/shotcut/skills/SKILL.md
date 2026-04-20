@@ -1,6 +1,5 @@
 ---
-name: >-
-  cli-anything-shotcut
+name: "cli-anything-shotcut"
 description: >-
   Command-line interface for Shotcut - A stateful command-line interface for video editing, built on the MLT XML format. Designed for AI ag...
 ---
@@ -19,7 +18,9 @@ pip install cli-anything-shotcut
 
 **Prerequisites:**
 - Python 3.10+
-- shotcut must be installed on your system
+- `melt` (MLT CLI) — required for rendering and playback
+- `ffmpeg` / `ffprobe` — required for media probing
+- `shotcut` must be installed on your system
 
 
 ## Usage
@@ -42,12 +43,55 @@ cli-anything-shotcut --json project info -p project.json
 
 ### REPL Mode
 
-When invoked without a subcommand, the CLI enters an interactive REPL session:
+When invoked without a subcommand, the CLI enters an interactive REPL session with undo/redo support:
 
 ```bash
 cli-anything-shotcut
-# Enter commands interactively with tab-completion and history
+# or with a project:
+cli-anything-shotcut --project my_project.mlt
 ```
+
+#### REPL Commands
+
+**Workflow:** Always `media import` first to get a `clip_id`, then use `add-clip` to place it on the timeline.
+
+**Project & Session:**
+- `new [profile]` — Create new project (default: `hd1080p30`)
+- `open <path>` — Open `.mlt` file
+- `save [path]` — Save project
+- `info` — Show project info
+- `xml` — Print raw MLT XML
+- `status` — Show session status
+- `undo` / `redo` — Navigate operation history
+
+**Media (two-step model):**
+- `media import <file> [--caption name]` — Import file into project bin, returns `clip_id` (e.g., `clip0`)
+- `media` — List all imported media
+- `probe <file>` — Analyze a media file
+
+**Timeline:**
+- `add-track <video|audio> [name]` — Add a track
+- `tracks` — List all tracks
+- `show` — Visual timeline overview
+- `add-clip <clip_id> <track> [in] [out] [--at time]` — Place imported clip on track
+- `clips <track>` — List clips on a track
+- `remove-clip <track> <clip>` — Remove a clip
+- `trim <track> <clip> [--in tc] [--out tc]` — Trim clip
+- `split <track> <clip> <at>` — Split clip at timecode
+
+**Filters:**
+- `list-filters [video|audio]` — Browse available filters
+- `filter-info <name>` — Show filter details
+- `add-filter <name> [--track n] [--clip n] [key=val ...]` — Add filter to clip, track, or global
+- `filters [--track n] [--clip n]` — List active filters
+- `remove-filter <idx> [--track n] [--clip n]` — Remove filter by index
+- `set-filter <idx> <param> <value> [--track n] [--clip n]` — Set filter parameter
+- `volume-envelope [--track n] [--clip n] TIME=LEVEL ...` — Keyframed volume (e.g., `00:00:00.000=1.0 00:00:03.000=0.35`)
+- `duck [--track n] [--clip n] START..END ...` — Ducking envelope (e.g., `00:00:06.000..00:00:09.000`)
+
+**Export:**
+- `presets` — List export presets
+- `render <output> [--preset name]` — Render to video file
 
 
 ## Command Groups

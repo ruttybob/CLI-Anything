@@ -164,28 +164,41 @@ def _absolute_insertion_point(
         raise ValueError(f"Timeline position must be non-negative, got {at_time!r}")
 
     children = list(playlist)
-    entries = mlt_xml.get_playlist_entries(playlist)
     timeline_cursor = 0
 
-    for idx, entry in enumerate(entries):
-        duration = _entry_duration_frames(session, entry)
-        start = timeline_cursor
-        end = start + duration
-        prop_offset = sum(1 for c in children[:sum(1 for e in entries[:idx]
-                                                    if e is entry)]
-                          if c.tag == "property")
-        if target == start:
-            return idx + prop_offset, 0, 0
-        if entry["type"] == "blank" and start < target < end:
-            leading = target - start
-            trailing = end - target
-            return idx + prop_offset, leading, trailing
-        if entry["type"] == "entry" and start < target < end:
-            raise RuntimeError(
-                f"Timeline position {at_time} overlaps an existing clip on track; "
-                "split or move clips before placing another clip there"
-            )
-        timeline_cursor = end
+    for phys_idx, child in enumerate(children):
+        if child.tag == "property":
+            continue
+
+        if child.tag == "blank":
+            duration = parse_time_input(child.get("length", "00:00:00.000"), fps_num, fps_den)
+            start = timeline_cursor
+            end = start + duration
+            if target == start:
+                return phys_idx, 0, 0
+            if start < target < end:
+                return phys_idx, target - start, end - target
+            timeline_cursor = end
+            continue
+
+        if child.tag == "entry":
+            in_tc = child.get("in", "00:00:00.000")
+            out_tc = child.get("out")
+            if out_tc is None:
+                prod = mlt_xml.find_element_by_id(session.root, child.get("producer", ""))
+                out_tc = prod.get("out", "00:00:00.000") if prod is not None else "00:00:00.000"
+            duration = parse_time_input(out_tc, fps_num, fps_den) - parse_time_input(in_tc, fps_num, fps_den)
+            start = timeline_cursor
+            end = start + duration
+            if target == start:
+                return phys_idx, 0, 0
+            if start < target < end:
+                raise RuntimeError(
+                    f"Timeline position {at_time} overlaps an existing clip on track; "
+                    "split or move clips before placing another clip there"
+                )
+            timeline_cursor = end
+            continue
 
     return len(children), max(0, target - timeline_cursor), 0
 

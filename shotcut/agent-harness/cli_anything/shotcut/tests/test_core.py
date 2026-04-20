@@ -545,6 +545,38 @@ class TestTimeline:
                 at_time="00:00:02.000",
             )
 
+    def test_add_clip_at_boundary_between_clips(self, session_with_track, dummy_file):
+        clip_id = media_mod.import_media(session_with_track, dummy_file)["clip_id"]
+        tl_mod.add_clip(session_with_track, clip_id, 1,
+                        in_point="00:00:00.000", out_point="00:00:01.000")
+        tl_mod.add_clip(session_with_track, clip_id, 1,
+                        in_point="00:00:00.000", out_point="00:00:01.000",
+                        at_time="00:00:01.000")
+        tl_mod.add_clip(session_with_track, clip_id, 1,
+                        in_point="00:00:00.000", out_point="00:00:01.000",
+                        at_time="00:00:01.000")
+        clips = tl_mod.list_clips(session_with_track, 1)
+        real = [c for c in clips if c.get("clip_index") is not None]
+        assert len(real) == 3
+        playlist = session_with_track._track_playlists[1]
+        children = list(playlist)
+        entry_producers = [c.get("producer") for c in children if c.tag == "entry"]
+        assert entry_producers == ["tl_clip0", "tl_clip0", "tl_clip0"]
+
+    def test_add_clip_at_after_two_clips(self, session_with_track, dummy_file):
+        clip_id = media_mod.import_media(session_with_track, dummy_file)["clip_id"]
+        tl_mod.add_clip(session_with_track, clip_id, 1,
+                        in_point="00:00:00.000", out_point="00:00:01.000")
+        tl_mod.add_clip(session_with_track, clip_id, 1,
+                        in_point="00:00:00.000", out_point="00:00:01.000",
+                        at_time="00:00:01.000")
+        tl_mod.add_clip(session_with_track, clip_id, 1,
+                        in_point="00:00:00.000", out_point="00:00:01.000",
+                        at_time="00:00:02.000")
+        clips = tl_mod.list_clips(session_with_track, 1)
+        real = [c for c in clips if c.get("clip_index") is not None]
+        assert len(real) == 3
+
     def test_undo_add_track(self, session):
         initial = len(tl_mod.list_tracks(session))
         tl_mod.add_track(session, "video")

@@ -8,18 +8,28 @@ without a GUI.
 
 - Python 3.10+
 - `click` (CLI framework)
+- `melt` (MLT CLI) — **required** for rendering and playback
+- `ffmpeg` / `ffprobe` — required for media probing and export
 
 Optional (for interactive REPL):
 - `prompt_toolkit`
-
-Optional (for rendering/media probing):
-- `ffmpeg` / `ffprobe`
-- `melt` (MLT CLI)
 
 ## Install Dependencies
 
 ```bash
 pip install click prompt_toolkit
+```
+
+System tools (required for full functionality):
+```bash
+# Arch Linux
+pacman -S melt ffmpeg
+
+# Ubuntu/Debian
+apt install melt ffmpeg
+
+# macOS
+brew install mlt ffmpeg
 ```
 
 ## How to Run
@@ -45,11 +55,87 @@ python3 -m cli.shotcut_cli --json --project my_project.mlt project info
 ### Interactive REPL
 
 ```bash
+# Start with a new project
 python3 -m cli.shotcut_cli repl
+
+# Or open an existing project
 python3 -m cli.shotcut_cli repl --project my_project.mlt
 ```
 
 Inside the REPL, type `help` for all available commands.
+
+#### REPL Command Reference
+
+**Project & Session:**
+
+| Command | Description |
+|---------|-------------|
+| `new [profile]` | Create new project (default: `hd1080p30`) |
+| `open <path>` | Open an existing `.mlt` project file |
+| `save [path]` | Save the project |
+| `info` | Show project info |
+| `xml` | Print raw MLT XML |
+| `status` | Show session status |
+| `undo` | Undo last operation |
+| `redo` | Redo last undone operation |
+
+**Media:**
+
+| Command | Description |
+|---------|-------------|
+| `media import <file> [--caption name]` | Import media file, returns `clip_id` |
+| `media` | List all imported media |
+| `probe <file>` | Analyze a media file |
+
+**Timeline:**
+
+| Command | Description |
+|---------|-------------|
+| `add-track <video\|audio> [name]` | Add a track |
+| `tracks` | List all tracks |
+| `show` | Show timeline overview |
+| `add-clip <clip_id> <track> [in] [out] [--at time]` | Add clip to track |
+| `clips <track>` | List clips on a track |
+| `remove-clip <track> <clip>` | Remove a clip |
+| `trim <track> <clip> [--in tc] [--out tc]` | Trim clip in/out points |
+| `split <track> <clip> <at>` | Split clip at timecode |
+
+**Filters:**
+
+| Command | Description |
+|---------|-------------|
+| `list-filters [video\|audio]` | Browse available filters |
+| `filter-info <name>` | Show filter details and params |
+| `add-filter <name> [--track n] [--clip n] [p=v ...]` | Add filter |
+| `filters [--track n] [--clip n]` | List active filters |
+| `remove-filter <idx> [--track n] [--clip n]` | Remove filter |
+| `set-filter <idx> <param> <value> [--track n] [--clip n]` | Set filter param |
+| `volume-envelope [--track n] [--clip n] TIME=LEVEL ...` | Set volume envelope |
+| `duck [--track n] [--clip n] START..END ...` | Apply ducking envelope |
+
+**Export:**
+
+| Command | Description |
+|---------|-------------|
+| `presets` | List export presets |
+| `render <output> [--preset name]` | Render project |
+
+#### REPL Example Session
+
+```
+> new hd1080p30
+> add-track video Main
+> media import intro.mp4
+  Imported intro.mp4 as clip0
+> media import main.mp4
+  Imported main.mp4 as clip1
+> add-clip clip0 1 00:00:00.000 00:00:05.000
+> add-clip clip1 1 00:00:00.000 00:00:10.000 --at 00:00:05.000
+> add-filter brightness --track 1 --clip 0 level=1.3
+> show
+> save
+> render output.mp4 --preset h264-high
+```
 
 ## Command Reference
 
@@ -205,7 +291,7 @@ python3 -m cli.shotcut_cli --project edit.mlt filter add brightness --track 1 --
 
 # Duck the music during narration
 python3 -m cli.shotcut_cli --project edit.mlt filter duck --track 2 \
-  --window 00:00:00.000:00:00:05.000 --duck 0.2
+  --window 00:00:00.000..00:00:05.000 --duck 0.2
 
 # View the timeline
 python3 -m cli.shotcut_cli --project edit.mlt timeline show
